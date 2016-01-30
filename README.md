@@ -92,7 +92,7 @@ run daemon process
 # stop process
 ```
 
-4 .restart process
+4. restart process
 
 ```
 ./yii {NAME}/restart
