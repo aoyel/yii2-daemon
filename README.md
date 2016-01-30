@@ -25,7 +25,7 @@ to the require section of your `composer.json` file.
 Usage
 -----
 ### Create new daemons
-1. Create in you console controllers path file {NAME}DaemonController.php with following content:
+####Create in you console controllers path file {NAME}DaemonController.php with following content:
 ```
 <?php
 
@@ -76,7 +76,7 @@ run daemon process
 ./yii {NAME}
 ```
 
-2. get process state
+####get process state
 
 ```
 ./yii {NAME}/state
@@ -84,7 +84,7 @@ run daemon process
 # return process state
 ```
 
-3. stop process
+####stop process
 
 ```
 ./yii {NAME}/stop
@@ -92,7 +92,7 @@ run daemon process
 # stop process
 ```
 
-4. restart process
+####restart process
 
 ```
 ./yii {NAME}/restart
@@ -100,14 +100,14 @@ run daemon process
 # stop process
 ```
 
-5. add crontab
+####add crontab
 
  ```
  * */2 * * * /path/to/process/{NAME}/restart
  # every 2 hour restart process
  ```
 
-6. Add new daemon to daemons list in watcher.
+####Add new daemon to daemons list in watcher.
 
 
 ### Setting WatcherDaemon
