@@ -119,12 +119,18 @@ abstract class DaemonController extends Controller
 
 
     /**
-     * Base action, you can\t override or create another actions
-     *
-     * @return boolean
+     * check process is running
+     * @param $pid process id
+     * @return bool if process is running return true otherwise return false
      */
-    final public function actionIndex()
-    {
+    protected function isProcessRunning($pid){
+        return !!posix_getpgid($pid);
+    }
+
+    /**
+     * process start
+     */
+    protected function doStart(){
         if ($this->demonize) {
             $pid = pcntl_fork();
             if ($pid == -1) {
@@ -164,6 +170,26 @@ abstract class DaemonController extends Controller
         return $this->loop();
     }
 
+    /**
+     * process stop
+     * @return bool
+     */
+    protected function doStop(){
+        if(!file_exists($this->getPidPath())) {
+            $this->writeConsole("pid file not exists , process is running?");
+            return false;
+        }
+        $pid = intval(file_get_contents($this->getPidPath()));
+        if($this->isProcessRunning($pid)){
+            posix_kill($pid, SIGTERM);
+        }else{
+            if(file_exists($this->getPidPath())){
+                @unlink($this->getPidPath());
+            }
+        }
+        $this->writeConsole("stoped process {$pid}");
+    }
+
     protected function getProcessName()
     {
         return $this->shortName;
@@ -178,14 +204,15 @@ abstract class DaemonController extends Controller
      */
     public function beforeAction($action)
     {
-        if (parent::beforeAction($action)) {
-            $this->initLogger();
-            if ($action->id != "index") {
-                throw new NotSupportedException(
-                    "Only index action allowed in daemons. So, don't create and call another"
-                );
-            }
-            return true;
+        $allowAction = [
+            "index",
+            "stop" ,
+            "state",
+            "help",
+            "restart"
+        ];
+        if (! in_array ( $action->id, $allowAction )) {
+            throw new NotSupportedException ( "Only index action allowed in daemons. So, don't create and call another" );
         } else {
             return false;
         }
@@ -325,7 +352,6 @@ abstract class DaemonController extends Controller
         }
     }
 
-
     /**
      * Tasks runner
      *
@@ -438,4 +464,66 @@ abstract class DaemonController extends Controller
         return $dir . DIRECTORY_SEPARATOR . $this->shortName;
     }
 
+    /**
+     * Base action, you can\t override or create another actions
+     *
+     * @return boolean
+     */
+    final public function actionIndex()
+    {
+        $this->doStart();
+    }
+
+    /**
+     * stop process
+     */
+    final public function actionStop(){
+        $this->doStop();
+    }
+
+    /**
+     * get process status
+     */
+    final public function actionState(){
+        if(file_exists($this->getPidPath())){
+            $pid = intval(file_get_contents($this->getPidPath()));
+            if($this->isProcessRunning($pid)){
+                $this->writeConsole("runing");
+            }else{
+                $this->writeConsole("unknow");
+            }
+        }else{
+            $this->writeConsole("stoped");
+        }
+    }
+
+    /**
+     * restart service
+     */
+    final public function actionRestart(){
+        if(file_exists($this->getPidPath())){
+            $pid = intval(file_get_contents($this->getPidPath()));
+            if($this->isProcessRunning($pid)){
+                posix_kill($pid, SIGTERM);
+                $this->writeConsole("restart....");
+                while($this->isProcessRunning($pid)){
+                    sleep(1);
+                }
+                if(file_exists($this->getPidPath())){
+                    @unlink ( $this->getPidPath ());
+                }
+                $this->doStart();
+                $this->writeConsole("restart successful");
+            }else{
+                if(file_exists($this->getPidPath())){
+                    @unlink ( $this->getPidPath ());
+                }
+                $this->doStart();
+                $this->writeConsole("restart successful");
+            }
+        }else{
+            $this->doStart();
+            $this->writeConsole("restart successful");
+        }
+    }
 }

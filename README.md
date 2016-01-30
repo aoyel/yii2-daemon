@@ -21,6 +21,95 @@ or add
 
 to the require section of your `composer.json` file.
 
+
+Usage
+-----
+### Create new daemons
+1. Create in you console controllers path file {NAME}DaemonController.php with following content:
+```
+<?php
+
+namespace console\controllers;
+
+use \vyants\daemon\DaemonController;
+
+class {NAME}DaemonController extends DaemonController
+{
+    public function init(){
+        //$this->demonize = true;
+        parent::init();
+    }
+    /**
+     * @return array
+     */
+    protected function defineJobs()
+    {
+        /*
+        TODO: return task list, extracted from DB, queue managers and so on.
+        Extract tasks in small portions, to reduce memory usage.
+        */
+        return ['foo'];
+    }
+    /**
+     * @return jobtype
+     */
+    protected function doJob($job)
+    {
+        /*
+        TODO: implement you logic
+        Don't forget to mark task as completed in your task source
+        */
+        if(method_exists($this, $job)){
+            call_user_func([$this,$job]);
+        }
+    }
+
+    public function foo(){
+        /**
+         * this is daemon process
+         */
+    }
+}
+```
+run daemon process
+```
+./yii {NAME}
+```
+
+2. get process state
+
+```
+./yii {NAME}/state
+
+# return process state
+```
+
+3. stop process
+
+```
+./yii {NAME}/stop
+
+# stop process
+```
+
+4 .restart process
+
+```
+./yii {NAME}/restart
+
+# stop process
+```
+
+5. add crontab
+
+ ```
+ * */2 * * * /path/to/process/{NAME}/restart
+ # every 2 hour restart process
+ ```
+
+6. Add new daemon to daemons list in watcher.
+
+
 ### Setting WatcherDaemon
 WatcherDaemon is the main daemon and provides from box. This daemon check another daemons and run, if it need.
 Do the following steps:
@@ -54,43 +143,7 @@ class WatcherDaemonController extends \vyants\daemon\controllers\WatcherDaemonCo
 ```
 Watcher can't start twice, only one instance can work in the one moment.
 
-Usage
------
-### Create new daemons
-1. Create in you console controllers path file {NAME}DaemonController.php with following content:
-```
-<?php
 
-namespace console\controllers;
-
-use \vyants\daemon\DaemonController;
-
-class {NAME}DaemonController extends DaemonController
-{
-    /**
-     * @return array
-     */
-    protected function defineJobs()
-    {
-        /*
-        TODO: return task list, extracted from DB, queue managers and so on. 
-        Extract tasks in small portions, to reduce memory usage.
-        */
-    }
-    /**
-     * @return jobtype
-     */
-    protected function doJob($job)
-    {
-        /*
-        TODO: implement you logic
-        Don't forget to mark task as completed in your task source
-        */
-    }
-}
-```
-2. Implement logic. 
-3. Add new daemon to daemons list in watcher.
 
 ### Daemon settings (propeties)
 In your daemon you can override parent properties:
